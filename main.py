@@ -111,7 +111,7 @@ s.login(SMTP_LOGIN, SMTP_PASS)
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-message_template = "Salut {name}!\n\nTu as l'honneur et le privilège d'offrir un truc à {gift_one} et {gift_two} ! Chic.\n\nGros bisous\nLe robot super content de Noël ( https://github.com/flo-dhalluin/tirage-kdo )"
+message_template = "Salut {name}!\n\nTu as l'honneur et le privilège d'offrir un truc à {gift_one} et {gift_two} ! Chic.\n\nGros bisous\nLe robot super content de Noël ( https://github.com/flo-dhalluin/tirage-kdo-bot )"
 
 for name, gifts in result.items():
     msg = MIMEMultipart()
