@@ -1,3 +1,6 @@
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <flal@melix.net> wrote this file. As long as you retain this notice you can do whatever you want with this stuff. If we meet some day, and you think this stuff is worth it, you can buy me a beer in return
+
 # read a json describing people do the magic to pick two different people to send
 # gifts to so that you don't have to gift yourself, or your partner and send a mail to tell you, so that no-one know.
 #
