@@ -10,10 +10,10 @@
 # ex json 
 # [
 #   {"nom":"Alice",
-#    "partner": "Bob",
+#    "blacklist": ["Bob"],
 #    "email": "alice@corp.com"},
 #   {"nom":"Bob",
-#    "partner": "Alice",
+#    "blacklist": ["Alice", "Floflo"],
 #    "email": "alice@corp.com"},
 # ..]
 
@@ -28,64 +28,50 @@ with open(sys.argv[1], 'br') as input_data :
     raw_dat = json.load(input_data)
     persons = [d["nom"] for d in raw_dat]
     email_addresses = {}
-    couples = []
-    has_partner = set()
+    blacklist = {}
     for p in raw_dat :
         email_addresses[p["nom"]] = p["email"]
-        if "partner" in p and not p["nom"] in has_partner :
-            couples.append(set((p["nom"], p["partner"])))
-            has_partner.add(p["nom"])
-            has_partner.add(p["partner"])
-            
+        blacklist[p["nom"]] = p["blacklist"]
+ 
 
-    
-conjoints = {}
-for a,b in couples :
-    conjoints[a] = b
-    conjoints[b] = a
-print(conjoints)
-
-def not_a_couple(binome) :
-    a,b = binome
-    if a in conjoints :
-        return b != conjoints[a]
-    return False
-
-def is_gift_possible(person, binome) :
-    is_in_binome = p in binome
-    is_conjoint = p in conjoints and conjoints[p] in binome
-    return not ( is_in_binome or is_conjoint)
-
+def filter_first_in_blacklist(c):
+    """ this to avoid aving a couple """
+    return not c[0] == blacklist[c[1]][0] or not c[1] == blacklist[c[0]][0]
+        
 tentatives = 0
-while tentatives < 100 :
-    # generate a list of all possible binomes, excluding couples
-    binomes = list(filter(not_a_couple, itertools.combinations(persons, 2)))
+while tentatives < 1000 :
+    # generate a list of all possible binomes, excluding blacklisted combinations
+    binomes = list(filter(filter_first_in_blacklist,  itertools.combinations(persons, 2)))
     random.shuffle(binomes)
     result = {}
     has_present = set()
     for p in persons :
         try :
-            binome = next(filter(lambda b: is_gift_possible(p, b), binomes))
+            # find the first pair NOT containing this person
+            not_me = filter(lambda b: not p in b, binomes)
+            not_blacklist = filter(lambda b: not b[0] in blacklist[p], not_me)
+            not_blacklist = filter(lambda b: not b[1] in blacklist[p], not_blacklist)
+            binome = next(not_blacklist)
         except StopIteration :
             # no solution
             break
-        binomes.remove(binome)
-        result[p] = binome
-        for o in binome :
-            if o in has_present :
+
+        for target in binome :
+            if target in has_present :
                 # this one has 2 presents, remove all possible couple
                 # containing this person.
-                binomes = list(filter(lambda c: not o in c, binomes))
+                binomes = list(filter(lambda c: not target in c, binomes))
             else :
-                has_present.add(o)
-    if(len(result) == len(persons)):
-        # we have a solution !!
+                has_present.add(target)
+        result[p] = binome
+    if len(result) == len(persons):
         break
     print("failed", tentatives)
     tentatives += 1
 
+    
 with open("result_kdo.json", 'w') as f :
-    f.write(json.dumps(result))
+    f.write(json.dumps(result, ensure_ascii=False))
 
 # check
 counts = {k:0 for k in persons}
@@ -94,7 +80,8 @@ for k,(a,b) in result.items() :
     counts[b] += 1
     assert(a != k)
     assert(b != k)
-
+    assert(not a in blacklist[k])
+    assert(not b in blacklist[k])
     
 for c in counts.values() :
     assert(c == 2)
