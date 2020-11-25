@@ -64,6 +64,11 @@ while tentatives < 1000 :
             else :
                 has_present.add(target)
         result[p] = binome
+        try :
+            binomes.remove(binome)
+        except ValueError:
+            # binome already removed
+            pass
     if len(result) == len(persons):
         break
     print("failed", tentatives)
