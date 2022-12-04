@@ -27,21 +27,23 @@ import json
 with open(sys.argv[1], 'br') as input_data :
     raw_dat = json.load(input_data)
     persons = [d["nom"] for d in raw_dat]
+    persons_set = set(persons)
     email_addresses = {}
     blacklist = {}
     for p in raw_dat :
         email_addresses[p["nom"]] = p["email"]
-        blacklist[p["nom"]] = p["blacklist"]
+        bll = p["blacklist"]
+        for blacklisted_person in bll :
+            if not blacklisted_person in persons_set :
+                print(f"{blacklisted_person} est blacklistée pour {p} mais n'existe pas")
+                exit(-1)
+        blacklist[p["nom"]] = bll
  
-
-def filter_first_in_blacklist(c):
-    """ this to avoid aving a couple """
-    return not c[0] == blacklist[c[1]][0] or not c[1] == blacklist[c[0]][0]
         
 tentatives = 0
 while tentatives < 1000 :
     # generate a list of all possible binomes, excluding blacklisted combinations
-    binomes = list(filter(filter_first_in_blacklist,  itertools.combinations(persons, 2)))
+    binomes = list(itertools.combinations(persons, 2))
     random.shuffle(binomes)
     result = {}
     has_present = set()
@@ -71,10 +73,11 @@ while tentatives < 1000 :
             pass
     if len(result) == len(persons):
         break
-    print("failed", tentatives)
+    print("tentatives ", tentatives, " --> retry")
     tentatives += 1
 
-    
+
+print("dumping result to : result_kdo.json")
 with open("result_kdo.json", 'w') as f :
     f.write(json.dumps(result, ensure_ascii=False))
 
@@ -90,13 +93,14 @@ for k,(a,b) in result.items() :
     
 for c in counts.values() :
     assert(c == 2)
+
     
 SMTP_HOST = os.environ['SMTP_HOST']
 SMTP_PORT = 587
 SMTP_LOGIN = os.environ['SMTP_LOGIN']
 SMTP_PASS = os.environ['SMTP_PASS']
 
-
+print("SMTP :", SMTP_HOST, SMTP_LOGIN)
 # sending emails
 s = smtplib.SMTP(host=SMTP_HOST, port=SMTP_PORT)
 s.starttls()
@@ -109,6 +113,7 @@ from email.mime.text import MIMEText
 message_template = "Salut {name}!\n\nTu as l'honneur et le privilège d'offrir un truc à {gift_one} et {gift_two} ! Chic.\n\nGros bisous\nLe robot super content de Noël ( https://github.com/flo-dhalluin/tirage-kdo-bot )"
 
 for name, gifts in result.items():
+    print("sending mail to :", name, "->", email_addresses[name])
     msg = MIMEMultipart()
     msg["From"] = "SuperContent <no-reply@flal.net>"
     msg["To"] = email_addresses[name]
