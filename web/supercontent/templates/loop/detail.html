@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+  <main>
+    <hgroup>
+      <h2> Boucle </h2>
+      <h3> {{the_loop.name}}</h3>
+    </hgroup>
+
+    <div id="person-list">
+      {% for p in the_loop.persons %}
+      <div id="person-{{p.id}}">
+	{% include "loop/partials/person_details.html" %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <h4> Ajouter une persone : </h4>
+    {% set target=url_for("add_person", loop_id=the_loop.id) %}
+    {% include "loop/partials/person_form.html" %}
+</main>
+{% endblock %}
+

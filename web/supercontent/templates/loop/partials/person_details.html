@@ -1,0 +1,14 @@
+
+<div id="person-{{p.id}}">
+<p hx-trigger="click"
+   hx-target="#person-{{p.id}}"
+   hx-swap="outerHTML"
+   hx-get="{{ url_for("add_person", loop_id=the_loop.id, person_id=p.id)}}"> {{ p.name }} :: {{ p.email }}
+  -- Evite : [
+  {% for e in p.avoids %}
+  {{e.name}},
+  {% endfor %}
+  ] </p>
+<a href="#"> DELETE </a>
+<a href="#"> edit </a>
+</div>

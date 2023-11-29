@@ -1,0 +1,28 @@
+
+<form hx-post="{{target}}"
+      {% if p %}
+      hx-swap="outerHTML"
+      {% else %}
+      hx-target="#person-list"
+      hx-swap="beforeend"
+      {% endif %}
+      method="POST">
+  {{ person_form.csrf_token }}
+  <div class="grid">
+    
+    {% if person_form.errors %}
+    <ul class="errors">
+      {% for field_name, field_errors in person_form.errors|dictsort if field_errors %}
+        {% for error in field_errors %}
+        <li>{{ person_form[field_name].label }}: {{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+    {% endif %}
+    
+    {{person_form.name.label}} {{person_form.name()}}
+    {{person_form.email.label}} {{person_form.email()}}
+    {{person_form.avoids.label}} {{person_form.avoids()}}
+    <input type="submit" value="gow">
+  </div>
+</form>
