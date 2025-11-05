@@ -7,7 +7,7 @@
 # expects SMTP config by environment variables (SMTP_HOST, SMTP_LOGIN, SMTP_PASS)
 # usage : main.py data.json
 #
-# ex json 
+# ex json
 # [
 #   {"nom":"Alice",
 #    "blacklist": ["Bob"],
@@ -22,51 +22,55 @@ import random
 import smtplib
 import sys, os
 import json
+from dotenv import load_dotenv
 
+load_dotenv()
 
-with open(sys.argv[1], 'br') as input_data :
+with open(sys.argv[1], "br") as input_data:
     raw_dat = json.load(input_data)
     persons = [d["nom"] for d in raw_dat]
     persons_set = set(persons)
     email_addresses = {}
     blacklist = {}
-    for p in raw_dat :
+    for p in raw_dat:
         email_addresses[p["nom"]] = p["email"]
         bll = p["blacklist"]
-        for blacklisted_person in bll :
-            if not blacklisted_person in persons_set :
-                print(f"{blacklisted_person} est blacklistée pour {p} mais n'existe pas")
+        for blacklisted_person in bll:
+            if not blacklisted_person in persons_set:
+                print(
+                    f"{blacklisted_person} est blacklistée pour {p} mais n'existe pas"
+                )
                 exit(-1)
         blacklist[p["nom"]] = bll
- 
-        
+
+
 tentatives = 0
-while tentatives < 1000 :
+while tentatives < 1000:
     # generate a list of all possible binomes, excluding blacklisted combinations
     binomes = list(itertools.combinations(persons, 2))
     random.shuffle(binomes)
     result = {}
     has_present = set()
-    for p in persons :
-        try :
+    for p in persons:
+        try:
             # find the first pair NOT containing this person
             not_me = filter(lambda b: not p in b, binomes)
             not_blacklist = filter(lambda b: not b[0] in blacklist[p], not_me)
             not_blacklist = filter(lambda b: not b[1] in blacklist[p], not_blacklist)
             binome = next(not_blacklist)
-        except StopIteration :
+        except StopIteration:
             # no solution
             break
 
-        for target in binome :
-            if target in has_present :
+        for target in binome:
+            if target in has_present:
                 # this one has 2 presents, remove all possible couple
                 # containing this person.
                 binomes = list(filter(lambda c: not target in c, binomes))
-            else :
+            else:
                 has_present.add(target)
         result[p] = binome
-        try :
+        try:
             binomes.remove(binome)
         except ValueError:
             # binome already removed
@@ -78,27 +82,27 @@ while tentatives < 1000 :
 
 
 print("dumping result to : result_kdo.json")
-with open("result_kdo.json", 'w') as f :
+with open("result_kdo.json", "w") as f:
     f.write(json.dumps(result, ensure_ascii=False))
 
 # check
-counts = {k:0 for k in persons}
-for k,(a,b) in result.items() :
+counts = {k: 0 for k in persons}
+for k, (a, b) in result.items():
     counts[a] += 1
     counts[b] += 1
-    assert(a != k)
-    assert(b != k)
-    assert(not a in blacklist[k])
-    assert(not b in blacklist[k])
-    
-for c in counts.values() :
-    assert(c == 2)
+    assert a != k
+    assert b != k
+    assert not a in blacklist[k]
+    assert not b in blacklist[k]
 
-    
-SMTP_HOST = os.environ['SMTP_HOST']
+for c in counts.values():
+    assert c == 2
+
+
+SMTP_HOST = os.environ["SMTP_HOST"]
 SMTP_PORT = 587
-SMTP_LOGIN = os.environ['SMTP_LOGIN']
-SMTP_PASS = os.environ['SMTP_PASS']
+SMTP_LOGIN = os.environ["SMTP_LOGIN"]
+SMTP_PASS = os.environ["SMTP_PASS"]
 
 print("SMTP :", SMTP_HOST, SMTP_LOGIN)
 # sending emails
@@ -118,5 +122,10 @@ for name, gifts in result.items():
     msg["From"] = "SuperContent <no-reply@flal.net>"
     msg["To"] = email_addresses[name]
     msg["Subject"] = "[Cadeaux Famille D'halluin] A qui va tu faire un cadeau à Noël ?"
-    msg.attach(MIMEText(message_template.format(name=name, gift_one=gifts[0], gift_two=gifts[1]), 'plain'))
+    msg.attach(
+        MIMEText(
+            message_template.format(name=name, gift_one=gifts[0], gift_two=gifts[1]),
+            "plain",
+        )
+    )
     s.send_message(msg)
